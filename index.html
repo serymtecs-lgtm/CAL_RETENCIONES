@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12343B">
+<title>Cálculo de retenciones | SERYMTECS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-a:#0F2027; --bg-b:#12343B;
+    --paper:#F6F5F1; --ink:#152524; --muted:#5F6A68;
+    --teal:#0E7C66; --teal-dk:#0A5C4C; --teal-soft:#E4F3EE;
+    --amber:#D98E2A; --amber-dk:#9A5C0C; --amber-soft:#FBF0DD;
+    --sky:#2E7EA6; --sky-dk:#1E5F80; --sky-soft:#E4F1F7;
+    --line:#E4DFD3;
+    --gap:clamp(.85rem, 2vw, 1.5rem);
+    color-scheme: light;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0; min-height:100vh; min-height:100dvh;
+    background:var(--paper); color:var(--ink);
+    font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    line-height:1.45;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+
+  /* ---------- Encabezado ---------- */
+  .hero{
+    position:relative;
+    background:
+      radial-gradient(900px 380px at 12% -20%, rgba(46,126,166,.28), transparent 60%),
+      radial-gradient(800px 360px at 100% 0%, rgba(217,142,42,.16), transparent 55%),
+      linear-gradient(180deg, var(--bg-a), var(--bg-b));
+    padding:calc(env(safe-area-inset-top,0px) + clamp(1.25rem, 3vw, 2.25rem)) clamp(1rem, 4vw, 2rem) clamp(5.5rem, 9vw, 7rem);
+    color:#fff; text-align:center;
+  }
+  .hero-inner{
+    max-width:1100px; margin:0 auto; position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:clamp(.75rem, 2vw, 1.25rem);
+  }
+  .logo{
+    width:clamp(120px, 22vw, 190px); height:auto; display:block;
+  }
+  .hero h1{
+    margin:0; font-weight:800; line-height:1.15; letter-spacing:-.01em;
+    font-size:clamp(1.3rem, 3.6vw, 2.35rem);
+    text-wrap:balance;
+    max-width:30ch;
+  }
+  .hero h2{
+    margin:0; font-weight:700; line-height:1.15;
+    font-size:clamp(1.55rem, 4.6vw, 2.9rem);
+    text-wrap:balance;
+  }
+
+  /* Escritorio y tablet horizontal: logo arriba a la derecha, título centrado */
+  @media (min-width: 900px){
+    .hero{ text-align:center; }
+    .hero{ padding-left:1rem; padding-right:1rem; }
+    .hero-inner{ max-width:1400px; padding:0 clamp(150px, 15vw, 210px); }
+    .logo{ position:absolute; top:0; right:0; width:clamp(140px, 14vw, 190px); }
+    .hero h1{ max-width:none; font-size:clamp(1.3rem, 2.35vw, 2.25rem); }
+  }
+
+  /* ---------- Contenido ---------- */
+  .wrap{
+    max-width:1100px; margin:0 auto;
+    padding:0 clamp(.85rem, 3vw, 2rem) 1rem;
+    margin-top:calc(-1 * clamp(3.6rem, 7vw, 5rem));
+    position:relative;
+  }
+
+  .summary{
+    background:#152524; color:#fff; border-radius:18px;
+    padding:clamp(1.1rem, 2.5vw, 1.6rem) clamp(1.1rem, 3vw, 1.75rem);
+    box-shadow:0 22px 40px -22px rgba(15,32,39,.65);
+    display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem 1.5rem;
+  }
+  .summary .stat-label{ color:rgba(255,255,255,.65); font-size:clamp(.78rem, 1.8vw, .88rem); }
+  .summary .stat-label b{ font-weight:500; }
+  .summary .stat-value{
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:700; color:#fff;
+    font-size:clamp(1.55rem, 4.5vw, 2.1rem); margin-top:.15rem; line-height:1.2;
+    overflow-wrap:anywhere;
+  }
+  .summary .stat-value.pay{ color:#7FD8B0; font-size:clamp(1.35rem, 3.8vw, 1.75rem); }
+  .summary .stat-label + .stat-value + .stat-label{ margin-top:1rem; }
+  .btn-clear{
+    font:inherit; font-size:.9rem; font-weight:600; cursor:pointer;
+    border:1px solid rgba(255,255,255,.3); color:#fff; background:transparent;
+    border-radius:10px; padding:.65rem 1.15rem; min-height:44px;
+    transition:background .15s ease;
+  }
+  .btn-clear:hover{ background:rgba(255,255,255,.1); }
+  .btn-clear:focus-visible{ outline:3px solid #7FD8B0; outline-offset:2px; }
+
+  /* Tarjetas: 1 columna en celular, 2 en tablet, 3 en escritorio */
+  .cards{
+    display:grid; gap:var(--gap); margin-top:var(--gap);
+    grid-template-columns:1fr;
+  }
+  @media (min-width: 640px){
+    .cards{ grid-template-columns:repeat(2, 1fr); }
+    .card-calc.isr7{ grid-column:1 / -1; }
+  }
+  @media (min-width: 1000px){
+    .cards{ grid-template-columns:repeat(3, 1fr); align-items:start; }
+    .card-calc.isr7{ grid-column:auto; }
+  }
+
+  .card-calc{
+    background:#fff; border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 18px 34px -24px rgba(15,32,39,.35);
+    overflow:hidden; min-width:0;
+  }
+  .card-calc .head{ padding:1.1rem 1.25rem .95rem; border-bottom:1px solid var(--line); }
+  .card-calc .head .pct{
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:700;
+    font-size:clamp(1.45rem, 3vw, 1.8rem); color:var(--teal-dk); line-height:1.2;
+  }
+  .card-calc .head .label{ font-size:.9rem; color:var(--muted); margin-top:.15rem; }
+  .isr5 .head .pct{ color:var(--sky-dk); }
+  .isr7 .head .pct{ color:var(--amber-dk); }
+
+  .card-calc .body{ padding:1.1rem 1.25rem 1.3rem; }
+  .form-label{ display:block; font-size:.85rem; color:var(--muted); margin-bottom:.4rem; }
+  .form-control{
+    width:100%; min-height:48px;
+    border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--ink);
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-size:1.1rem; padding:.6rem .8rem;
+  }
+  .form-control:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 .22rem rgba(14,124,102,.18); }
+  .isr5 .form-control:focus{ border-color:var(--sky); box-shadow:0 0 0 .22rem rgba(46,126,166,.18); }
+  .isr7 .form-control:focus{ border-color:var(--amber); box-shadow:0 0 0 .22rem rgba(217,142,42,.2); }
+
+  .lines{ margin-top:1rem; }
+  .row-line{
+    display:flex; justify-content:space-between; align-items:baseline; gap:.75rem;
+    padding:.55rem 0; border-bottom:1px dashed var(--line); font-size:.95rem;
+  }
+  .row-line .k{ min-width:0; }
+  .row-line .v{
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:500;
+    white-space:nowrap; text-align:right;
+  }
+  .row-line.final{
+    margin-top:.6rem; padding:.8rem .9rem; border:none; border-radius:10px; background:var(--teal-soft);
+  }
+  .isr5 .row-line.final{ background:var(--sky-soft); }
+  .isr7 .row-line.final{ background:var(--amber-soft); }
+  .row-line.final .k{ font-weight:700; }
+  .row-line.final .v{ font-size:1.2rem; font-weight:700; color:var(--teal-dk); }
+  .isr5 .row-line.final .v{ color:var(--sky-dk); }
+  .isr7 .row-line.final .v{ color:var(--amber-dk); }
+
+  .note{ font-size:.8rem; color:#7A7468; margin:.8rem 0 0; }
+
+  /* Celulares pequeños: etiquetas arriba del valor para que nada se corte */
+  @media (max-width: 420px){
+    .row-line:not(.final){ flex-direction:column; align-items:flex-start; gap:.1rem; }
+    .row-line:not(.final) .v{ text-align:left; }
+    .summary{ flex-direction:column; align-items:stretch; }
+    .btn-clear{ width:100%; }
+  }
+
+  footer{ text-align:center; font-size:.8rem; color:var(--muted); padding:1.5rem 1rem 2rem; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <img class="logo" src="logo-serymtecs.png" alt="Logotipo de SERYMTECS" width="966" height="653">
+    <h1>Servicios y Mantenimientos Técnicos Eléctricos</h1>
+    <h2>Cálculo de retenciones</h2>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="summary" aria-label="Resumen">
+    <div>
+      <div class="stat-label">TOTAL IMPUESTO <b>(Retención IVA + Retención ISR)</b></div>
+      <div class="stat-value" id="total-impuesto" aria-live="polite">Q 0.00</div>
+      <div class="stat-label">Total a pagar <b>(factura &minus; impuestos)</b></div>
+      <div class="stat-value pay" id="total-pagar" aria-live="polite">Q 0.00</div>
+    </div>
+    <button type="button" class="btn-clear" id="btn-borrar">Borrar datos</button>
+  </section>
+
+  <section class="cards" id="cards">
+
+    <article class="card-calc" id="card-iva">
+      <div class="head">
+        <div class="pct">12% / 15%</div>
+        <div class="label">IVA y su retención</div>
+      </div>
+      <div class="body">
+        <label class="form-label" for="iva-total">Total de facturación (Q)</label>
+        <input type="number" inputmode="decimal" class="form-control" id="iva-total" value="0" step="0.01" min="0">
+        <div class="lines">
+          <div class="row-line"><span class="k">Base</span><span class="v" id="iva-base">Q 0.00</span></div>
+          <div class="row-line"><span class="k">IVA 12%</span><span class="v" id="iva-iva">Q 0.00</span></div>
+          <div class="row-line final"><span class="k">Retención IVA 15%</span><span class="v" id="iva-ret">Q 0.00</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card-calc isr5" id="card-isr5">
+      <div class="head">
+        <div class="pct">5%</div>
+        <div class="label">Retención ISR</div>
+      </div>
+      <div class="body">
+        <label class="form-label" for="isr5-total">Total de facturación (Q)</label>
+        <input type="number" inputmode="decimal" class="form-control" id="isr5-total" value="0" step="0.01" min="0">
+        <div class="lines">
+          <div class="row-line"><span class="k">Base</span><span class="v" id="isr5-base">Q 0.00</span></div>
+          <div class="row-line final"><span class="k">Retención ISR 5%</span><span class="v" id="isr5-ret">Q 0.00</span></div>
+        </div>
+        <p class="note">Servicios sin relación de dependencia, factura &le; Q30,000.</p>
+      </div>
+    </article>
+
+    <article class="card-calc isr7" id="card-isr7">
+      <div class="head">
+        <div class="pct">5% + 7%</div>
+        <div class="label">ISR por tramos &gt; Q30,000</div>
+      </div>
+      <div class="body">
+        <label class="form-label" for="isr7-total">Total de facturación (Q)</label>
+        <input type="number" inputmode="decimal" class="form-control" id="isr7-total" value="0" step="0.01" min="0">
+        <div class="lines">
+          <div class="row-line"><span class="k">Base (total &divide; 1.12)</span><span class="v" id="isr7-base">Q 0.00</span></div>
+          <div class="row-line"><span class="k">Tramo 1 (primeros Q30,000 &times; 5%)</span><span class="v" id="isr7-t1">Q 0.00</span></div>
+          <div class="row-line"><span class="k">Excedente</span><span class="v" id="isr7-exc">Q 0.00</span></div>
+          <div class="row-line"><span class="k">Tramo 2 (excedente &times; 7%)</span><span class="v" id="isr7-t2">Q 0.00</span></div>
+          <div class="row-line final"><span class="k">Total ISR</span><span class="v" id="isr7-ret">Q 0.00</span></div>
+        </div>
+        <p class="note">5% sobre los primeros Q30,000 y 7% sobre el excedente.</p>
+      </div>
+    </article>
+
+  </section>
+</main>
+
+<footer>SERYMTECS &middot; Servicios y Mantenimientos Técnicos Eléctricos</footer>
+
+<script>
+function fmt(n){
+  // Separador de miles con coma cada 3 cifras y 2 decimales
+  return 'Q ' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:true});
+}
+
+let retIva = 0, retIsr5 = 0, retIsr7 = 0;
+
+function actualizarTotal(){
+  const total = retIva + retIsr5 + retIsr7;
+  const vIva = parseFloat(document.getElementById('iva-total').value) || 0;
+  const vIsr5 = parseFloat(document.getElementById('isr5-total').value) || 0;
+  const vIsr7 = parseFloat(document.getElementById('isr7-total').value) || 0;
+  // Total de facturación: el de IVA si lo hay; si no, el del ISR 5%; si no, el del ISR por tramos
+  const facturaTotal = vIva || vIsr5 || vIsr7;
+  document.getElementById('total-impuesto').textContent = fmt(total);
+  document.getElementById('total-pagar').textContent = fmt(facturaTotal - total);
+}
+
+function wire(prefix, retPct){
+  const input = document.getElementById(prefix+'-total');
+  const base = document.getElementById(prefix+'-base');
+  const ret = document.getElementById(prefix+'-ret');
+  const ivaOut = document.getElementById(prefix+'-iva'); // only exists for iva card
+  function calc(){
+    const total = parseFloat(input.value) || 0;
+    const b = total / 1.12;
+    base.textContent = fmt(b);
+    let retencion;
+    if(ivaOut){
+      const iva = b * 0.12;
+      ivaOut.textContent = fmt(iva);
+      retencion = iva * 0.15;
+    } else {
+      retencion = b * retPct;
+    }
+    ret.textContent = fmt(retencion);
+    if(prefix === 'iva') retIva = retencion;
+    if(prefix === 'isr5') retIsr5 = retencion;
+    actualizarTotal();
+  }
+  input.addEventListener('input', calc);
+  calc();
+}
+wire('iva', null);
+wire('isr5', 0.05);
+
+// ISR por tramos: 5% sobre los primeros Q30,000, 7% sobre el excedente (aplicados sobre la base)
+function wireTramos(){
+  const input = document.getElementById('isr7-total');
+  const baseEl = document.getElementById('isr7-base');
+  const t1 = document.getElementById('isr7-t1');
+  const exc = document.getElementById('isr7-exc');
+  const t2 = document.getElementById('isr7-t2');
+  const ret = document.getElementById('isr7-ret');
+  const LIMITE = 30000;
+  function calc(){
+    const total = parseFloat(input.value) || 0;
+    const base = total / 1.12;
+    const tramo1Base = Math.min(base, LIMITE);
+    const tramo1 = tramo1Base * 0.05;
+    const excedente = Math.max(base - LIMITE, 0);
+    const tramo2 = excedente * 0.07;
+    baseEl.textContent = fmt(base);
+    t1.textContent = fmt(tramo1);
+    exc.textContent = fmt(excedente);
+    t2.textContent = fmt(tramo2);
+    retIsr7 = tramo1 + tramo2;
+    ret.textContent = fmt(retIsr7);
+    actualizarTotal();
+  }
+  input.addEventListener('input', calc);
+  calc();
+}
+wireTramos();
+
+document.getElementById('btn-borrar').addEventListener('click', function(){
+  ['iva-total','isr5-total','isr7-total'].forEach(function(id){
+    const el = document.getElementById(id);
+    el.value = 0;
+    el.dispatchEvent(new Event('input'));
+  });
+});
+
+// ISR 5% e ISR por tramos son excluyentes: una factura solo puede llevar una de las dos.
+// Si el usuario escribe un valor distinto de 0 en una, la otra se limpia automáticamente.
+const isr5Input = document.getElementById('isr5-total');
+const isr7Input = document.getElementById('isr7-total');
+
+isr5Input.addEventListener('input', function(){
+  const v = parseFloat(isr5Input.value) || 0;
+  if(v !== 0 && parseFloat(isr7Input.value) !== 0){
+    isr7Input.value = 0;
+    isr7Input.dispatchEvent(new Event('input'));
+  }
+});
+
+isr7Input.addEventListener('input', function(){
+  const v = parseFloat(isr7Input.value) || 0;
+  if(v !== 0 && parseFloat(isr5Input.value) !== 0){
+    isr5Input.value = 0;
+    isr5Input.dispatchEvent(new Event('input'));
+  }
+});
+</script>
+</body>
+</html>
